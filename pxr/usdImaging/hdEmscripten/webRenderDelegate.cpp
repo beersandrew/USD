@@ -36,6 +36,7 @@
 #include "pxr/imaging/hd/meshUtil.h"
 #include "pxr/imaging/hd/smoothNormals.h"
 #include "pxr/imaging/hd/vtBufferSource.h"
+#include "pxr/imaging/hd/extComputation.h"
 
 #include <iostream>
 
@@ -363,6 +364,53 @@ private:
     Emscripten_Material &operator =(const Emscripten_Material &) = delete;
 };
 
+class Emscripten_ExtComputation final : public HdExtComputation {
+public:
+    Emscripten_ExtComputation(SdfPath const& id, emscripten::val renderDelegateInterface) :
+            HdExtComputation(id)
+            , _renderDelegateInterface(renderDelegateInterface)
+            , _sPrim(val::undefined())
+    {
+        std::cout << "created Emscripten_ExtComputation: " << id.GetAsString() << std::endl;
+        _sPrim = _renderDelegateInterface.call<val>("createSPrim", std::string("extComputation"), id.GetAsString());
+    }
+
+    virtual ~Emscripten_ExtComputation() = default;
+
+    virtual void Sync(HdSceneDelegate *sceneDelegate,
+                      HdRenderParam   *renderParam,
+                      HdDirtyBits     *dirtyBits) override
+    {
+
+        runInMainThread([&]() {
+
+            HdSprim* genericSprim = sceneDelegate->GetRenderIndex().GetSprim(HdPrimTypeTokens->extComputation, GetId());
+            HdExtComputation* computation = dynamic_cast<HdExtComputation*>(genericSprim);
+            if (computation) {
+                std::cout << "running comp sync: " << GetId().GetAsString() << std::endl;
+                computation->_Sync(sceneDelegate, renderParam, dirtyBits);
+            }
+            else{
+                std::cout << "not running comp sync: " << GetId().GetAsString() << std::endl;
+            }
+            *dirtyBits = HdExtComputation::Clean;
+        });
+    };
+
+    virtual HdDirtyBits GetInitialDirtyBitsMask() const override {
+        return HdMaterial::AllDirty;
+    }
+
+private:
+    emscripten::val _renderDelegateInterface;
+    emscripten::val _sPrim;
+
+
+    Emscripten_ExtComputation()                                  = delete;
+    Emscripten_ExtComputation(const Emscripten_ExtComputation &)             = delete;
+    Emscripten_ExtComputation &operator =(const Emscripten_ExtComputation &) = delete;
+};
+
 const TfTokenVector WebRenderDelegate::SUPPORTED_RPRIM_TYPES =
 {
     HdPrimTypeTokens->mesh,
@@ -371,7 +419,8 @@ const TfTokenVector WebRenderDelegate::SUPPORTED_RPRIM_TYPES =
 
 const TfTokenVector WebRenderDelegate::SUPPORTED_SPRIM_TYPES =
 {
-    HdPrimTypeTokens->material
+    HdPrimTypeTokens->material,
+    HdPrimTypeTokens->extComputation
 };
 
 const TfTokenVector WebRenderDelegate::SUPPORTED_BPRIM_TYPES =
@@ -450,7 +499,11 @@ WebRenderDelegate::CreateSprim(TfToken const& typeId,
 {
     if (typeId == HdPrimTypeTokens->material) {
         return new Emscripten_Material(sprimId, _renderDelegateInterface);
-    } else {
+    }
+    else if (typeId == HdPrimTypeTokens->extComputation) {
+        return new Emscripten_ExtComputation(sprimId, _renderDelegateInterface);
+    }
+    else {
         TF_CODING_ERROR("Unknown Sprim Type %s", typeId.GetText());
     }
 
@@ -462,7 +515,11 @@ WebRenderDelegate::CreateFallbackSprim(TfToken const& typeId)
 {
     if (typeId == HdPrimTypeTokens->material) {
         return new Emscripten_Material(SdfPath::EmptyPath(), _renderDelegateInterface);
-    } else {
+    }
+    else if (typeId == HdPrimTypeTokens->extComputation) {
+        return new Emscripten_ExtComputation(SdfPath::EmptyPath(), _renderDelegateInterface);
+    }
+    else {
         TF_CODING_ERROR("Unknown Sprim Type %s", typeId.GetText());
     }
 

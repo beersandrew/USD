@@ -129,12 +129,13 @@ public:
     HD_API
     bool IsInputAggregation() const;
 
-protected:
     HD_API
     void
     _Sync(HdSceneDelegate *sceneDelegate,
           HdRenderParam   *renderParam,
           HdDirtyBits     *dirtyBits);
+
+protected:
 
     HD_API
     static bool _IsEnabledSharedExtComputationData();
