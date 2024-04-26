@@ -15,7 +15,8 @@ pxr_library(hdEmscripten
       usdUtils
       sdf
       -Wl,--whole-archive usdShaders -Wl,--no-whole-archive
-        -Wl,--whole-archive usdSkel -Wl,--no-whole-archive
+      -Wl,--whole-archive usdSkel -Wl,--no-whole-archive
+      -Wl,--whole-archive usdSkelImaging -Wl,--no-whole-archive
       httpResolver
 
     PUBLIC_CLASSES
@@ -51,8 +52,10 @@ add_resources(usdLux)
 add_resources(ar)
 add_resources(usdGeom)
 add_resources(usdSkel)
+add_resources(usdSkelImaging)
 add_resources(ndr)
 add_resources(httpResolver)
+
 
 list(APPEND RESOURCE_PARAMETERS "--preload-file ${PROJECT_BINARY_DIR}/plugins_plugInfo.json@/usd/plugInfo.json")
 

@@ -484,7 +484,9 @@ UsdSkelImagingSkeletonAdapter::MarkDirty(const UsdPrim& prim,
                                          HdDirtyBits dirty,
                                          UsdImagingIndexProxy* index)
 {
+    std::cout << "UsdSkelImagingSkeletonAdapter::MarkDirty1" << std::endl;
     if (_IsCallbackForSkeleton(prim)) {
+        std::cout << "UsdSkelImagingSkeletonAdapter::MarkDirty2" << std::endl;
         // Mark the bone mesh dirty
         index->MarkRprimDirty(cachePath, dirty);
         // Re-run UpdateForTime if needed.
@@ -492,7 +494,7 @@ UsdSkelImagingSkeletonAdapter::MarkDirty(const UsdPrim& prim,
             index->RequestUpdateForTime(cachePath);
         }
     } else if (_IsSkinnedPrimPath(cachePath)) {
-
+        std::cout << "UsdSkelImagingSkeletonAdapter::MarkDirty3" << std::endl;
         // Since The SkeletonAdapter hijacks skinned prims (see SkelRootAdapter),
         // make sure to delegate to the actual adapter registered for the prim.
         UsdImagingPrimAdapterSharedPtr adapter = _GetPrimAdapter(prim);
@@ -531,6 +533,7 @@ UsdSkelImagingSkeletonAdapter::MarkDirty(const UsdPrim& prim,
     } else if (_IsSkinningComputationPath(cachePath) ||
               _IsSkinningInputAggregatorComputationPath(cachePath)) {
 
+        std::cout << "UsdSkelImagingSkeletonAdapter::MarkDirty4" << std::endl;
          TF_DEBUG(USDIMAGING_COMPUTATIONS).Msg(
                 "[SkeletonAdapter::MarkDirty] Marking "
                 "computation %s for skinned prim %s as Dirty (bits = 0x%x\n",
@@ -539,6 +542,7 @@ UsdSkelImagingSkeletonAdapter::MarkDirty(const UsdPrim& prim,
         index->MarkSprimDirty(cachePath, dirty);
     
     } else {
+        std::cout << "UsdSkelImagingSkeletonAdapter::MarkDirty5" << std::endl;
         // We don't expect to get callbacks on behalf of any other prims on
         // the USD stage.
          TF_WARN("Unhandled MarkDirty callback for cachePath <%s> "

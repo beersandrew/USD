@@ -58,6 +58,7 @@ HdExtComputation::Sync(HdSceneDelegate *sceneDelegate,
                        HdRenderParam   *renderParam,
                        HdDirtyBits     *dirtyBits)
 {
+    std::cout << "HdExtComputation::Sync" << std::endl;
     HdExtComputation::_Sync(sceneDelegate, renderParam, dirtyBits);
 }
 
@@ -68,7 +69,6 @@ HdExtComputation::_Sync(HdSceneDelegate *sceneDelegate,
 {
     HD_TRACE_FUNCTION();
     HF_MALLOC_TAG_FUNCTION();
-
     if (!TF_VERIFY(sceneDelegate != nullptr)) {
         return;
     }
