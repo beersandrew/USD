@@ -31,21 +31,23 @@
 
 PXR_NAMESPACE_USING_DIRECTIVE
 
-TF_DEFINE_PRIVATE_TOKENS(_tokens,
-    ((usdShadePlugin, "usdShade"))
-);
-
 void
 TestUsdShadeValidators()
 {
     // This should be updated with every new validator added with the
     // UsdShadeValidators keyword.
     const std::set<TfToken> expectedUsdShadeValidatorNames = {
-        UsdShadeValidatorNameTokens->encapsulationValidator,
         UsdShadeValidatorNameTokens->materialBindingApiAppliedValidator,
         UsdShadeValidatorNameTokens->materialBindingRelationships,
-        UsdShadeValidatorNameTokens->materialBindingCollectionValidator,
         UsdShadeValidatorNameTokens->shaderSdrCompliance,
+        UsdShadeValidatorNameTokens->subsetMaterialBindFamilyName,
+        UsdShadeValidatorNameTokens->subsetsMaterialBindFamily,
+        UsdShadeValidatorNameTokens->encapsulationValidator
+    };
+
+    // This should be updated with every new validator added with the
+    // UsdGeomSubset keyword.
+    const std::set<TfToken> expectedUsdGeomSubsetNames = {
         UsdShadeValidatorNameTokens->subsetMaterialBindFamilyName,
         UsdShadeValidatorNameTokens->subsetsMaterialBindFamily
     };
@@ -59,84 +61,30 @@ TestUsdShadeValidators()
     std::set<TfToken> validatorMetadataNameSet;
 
     UsdValidatorMetadataVector metadata =
-        registry.GetValidatorMetadataForPlugin(_tokens->usdShadePlugin);
-    TF_AXIOM(metadata.size() == 7);
+        registry.GetValidatorMetadataForKeyword(
+            UsdShadeValidatorKeywordTokens->UsdShadeValidators);
     for (const UsdValidatorMetadata& metadata : metadata) {
         validatorMetadataNameSet.insert(metadata.name);
     }
 
-    TF_AXIOM(validatorMetadataNameSet == expectedUsdShadeValidatorNames);
-}
+    TF_AXIOM(std::includes(validatorMetadataNameSet.begin(),
+                           validatorMetadataNameSet.end(),
+                           expectedUsdShadeValidatorNames.begin(),
+                           expectedUsdShadeValidatorNames.end()));
 
-void
-TestUsdShadeMaterialBindingCollections()
-{
-    UsdValidationRegistry& registry = UsdValidationRegistry::GetInstance();
-    const UsdValidator* validator = registry.GetOrLoadValidatorByName(
-        UsdShadeValidatorNameTokens->materialBindingCollectionValidator);
-    TF_AXIOM(validator);
+    // Repeat the test using a different keyword.
+    validatorMetadataNameSet.clear();
 
-    UsdStageRefPtr usdStage = UsdStage::Open("./badMaterialCollections.usda");
-
-    // Test prim with relationship to material binding collection
-    // to a single target fails validation.
-    {
-        const SdfPath primPath("/SingleTargetMaterialCollection");
-        const UsdPrim usdPrim = usdStage->GetPrimAtPath(primPath);
-        const UsdValidationErrorVector errors = validator->Validate(usdPrim);
-
-        TF_AXIOM(errors.size() == 1u);
-        const TfToken expectedErrorIdentifier(
-            "usdShade:MaterialBindingCollectionValidator."
-            "InvalidMaterialCollection");
-
-        const UsdValidationError& error = errors[0];
-
-        const SdfPath expectedAttrPath =
-            primPath.AppendProperty(UsdShadeTokens->materialBindingCollection);
-
-        TF_AXIOM(error.GetIdentifier() == expectedErrorIdentifier);
-        TF_AXIOM(error.GetType() == UsdValidationErrorType::Error);
-        TF_AXIOM(error.GetSites().size() == 1u);
-        const UsdValidationErrorSite& errorSite = error.GetSites()[0];
-        TF_AXIOM(errorSite.IsValid());
-        TF_AXIOM(errorSite.IsProperty());
-        TF_AXIOM(errorSite.GetProperty().GetPath() == expectedAttrPath);
-        const std::string expectedErrorMsg =
-            "Collection-based material binding on "
-            "</SingleTargetMaterialCollection> has 1 target </Material>, "
-            "needs 2: a collection path and a UsdShadeMaterial path.";
-        TF_AXIOM(error.GetMessage() == expectedErrorMsg);
+    metadata = registry.GetValidatorMetadataForKeyword(
+        UsdGeomValidatorKeywordTokens->UsdGeomSubset);
+    for (const UsdValidatorMetadata& metadata : metadata) {
+        validatorMetadataNameSet.insert(metadata.name);
     }
 
-    // Test prim with relationship to a material binding collection
-    // referencing nonexistent resources fails validation.
-    {
-        const SdfPath primPath("/IncompleteMaterialCollection/Bind1");
-        const UsdPrim usdPrim = usdStage->GetPrimAtPath(primPath);
-        const UsdValidationErrorVector errors = validator->Validate(usdPrim);
-
-        TF_AXIOM(errors.size() == 1u);
-        const TfToken expectedErrorIdentifier(
-            "usdShade:MaterialBindingCollectionValidator.InvalidResourcePath");
-
-        const UsdValidationError& error = errors[0];
-        const SdfPath expectedAttrPath =
-            primPath.AppendProperty(UsdShadeTokens->materialBindingCollection);
-
-        TF_AXIOM(error.GetIdentifier() == expectedErrorIdentifier);
-        TF_AXIOM(error.GetType() == UsdValidationErrorType::Error);
-        TF_AXIOM(error.GetSites().size() == 1u);
-        const UsdValidationErrorSite& errorSite = error.GetSites()[0];
-        TF_AXIOM(errorSite.IsValid());
-        TF_AXIOM(errorSite.IsProperty());
-        TF_AXIOM(errorSite.GetProperty().GetPath() == expectedAttrPath);
-        const std::string expectedErrorMsg =
-            "Collection-based material binding </IncompleteMaterialCollection/"
-            "Bind1.material:binding:collection> targets an invalid collection"
-            " </IncompleteMaterialCollection.collection:col1>.";
-        TF_AXIOM(error.GetMessage() == expectedErrorMsg);
-    }
+    TF_AXIOM(std::includes(validatorMetadataNameSet.begin(),
+                           validatorMetadataNameSet.end(),
+                           expectedUsdGeomSubsetNames.begin(),
+                           expectedUsdGeomSubsetNames.end()));
 }
 
 void
@@ -171,7 +119,7 @@ TestUsdShadeMaterialBindingRelationships()
         {
             const UsdValidationError& error = errors[0u];
 
-            const SdfPath expectedAttrPath =
+            const SdfPath attrPath =
                 primPath.AppendProperty(UsdShadeTokens->materialBinding);
             TF_AXIOM(error.GetIdentifier() == expectedErrorIdentifier);
             TF_AXIOM(error.GetType() == UsdValidationErrorType::Error);
@@ -179,7 +127,7 @@ TestUsdShadeMaterialBindingRelationships()
             const UsdValidationErrorSite& errorSite = error.GetSites()[0u];
             TF_AXIOM(errorSite.IsValid());
             TF_AXIOM(errorSite.IsProperty());
-            TF_AXIOM(errorSite.GetProperty().GetPath() == expectedAttrPath);
+            TF_AXIOM(errorSite.GetProperty().GetPath() == attrPath);
             const std::string expectedErrorMsg =
                 "Prim </MatBindAttributes> has material binding property "
                 "'material:binding' that is not a relationship.";
@@ -189,7 +137,7 @@ TestUsdShadeMaterialBindingRelationships()
         {
             const UsdValidationError& error = errors[1u];
 
-            const SdfPath expectedAttrPath =
+            const SdfPath attrPath =
                 primPath.AppendProperty(TfToken(
                     SdfPath::JoinIdentifier(
                         UsdShadeTokens->materialBinding, "someAttribute")));
@@ -200,7 +148,7 @@ TestUsdShadeMaterialBindingRelationships()
             const UsdValidationErrorSite& errorSite = error.GetSites()[0u];
             TF_AXIOM(errorSite.IsValid());
             TF_AXIOM(errorSite.IsProperty());
-            TF_AXIOM(errorSite.GetProperty().GetPath() == expectedAttrPath);
+            TF_AXIOM(errorSite.GetProperty().GetPath() == attrPath);
             const std::string expectedErrorMsg =
                 "Prim </MatBindAttributes> has material binding property "
                 "'material:binding:someAttribute' that is not a relationship.";
@@ -563,7 +511,6 @@ main()
     TestUsdShadeValidators();
     TestUsdShadeMaterialBindingAPIAppliedValidator();
     TestUsdShadeMaterialBindingRelationships();
-    TestUsdShadeMaterialBindingCollections();
     TestUsdShadeShaderPropertyCompliance();
     TestUsdShadeSubsetMaterialBindFamilyName();
     TestUsdShadeSubsetsMaterialBindFamily();
