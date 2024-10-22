@@ -155,6 +155,7 @@ pxr_build_test(testUsdUtilsValidators
         tf
         sdf
         usd
+        usdLux
         usdUtils
     CPPFILES
         testenv/testUsdUtilsValidators.cpp
