@@ -17,11 +17,13 @@
 PXR_NAMESPACE_OPEN_SCOPE
 
 #define USD_SHADE_VALIDATOR_NAME_TOKENS \
-    ((encapsulationValidator, "usdShade:EncapsulationRulesValidator")) \
-    ((materialBindingApiAppliedValidator, "usdShade:MaterialBindingApiAppliedValidator")) \
-    ((materialBindingRelationships, "usdShade:MaterialBindingRelationships")) \
-    ((shaderSdrCompliance, "usdShade:ShaderSdrCompliance"))                   \
-    ((subsetMaterialBindFamilyName, "usdShade:SubsetMaterialBindFamilyName")) \
+    ((encapsulationValidator, "usdShade:EncapsulationRulesValidator"))                      \
+    ((materialBindingApiAppliedValidator, "usdShade:MaterialBindingApiAppliedValidator"))   \
+    ((materialBindingRelationships, "usdShade:MaterialBindingRelationships"))               \
+    ((materialBindingCollectionValidator, "usdShade:MaterialBindingCollectionValidator"))   \
+    ((normalMapTextureValidator, "usdShade:NormalMapTextureValidator"))                     \
+    ((shaderSdrCompliance, "usdShade:ShaderSdrCompliance"))                                 \
+    ((subsetMaterialBindFamilyName, "usdShade:SubsetMaterialBindFamilyName"))               \
     ((subsetsMaterialBindFamily, "usdShade:SubsetsMaterialBindFamily"))
 
 #define USD_SHADE_VALIDATOR_KEYWORD_TOKENS                                    \
@@ -32,6 +34,8 @@ PXR_NAMESPACE_OPEN_SCOPE
     ((invalidConnectableHierarchy, "InvalidConnectableHierarchy"))      \
     ((missingMaterialBindingAPI,  "MissingMaterialBindingAPI"))         \
     ((materialBindingPropNotARel, "MaterialBindingPropNotARel"))        \
+    ((invalidMaterialCollection,  "InvalidMaterialCollection"))         \
+    ((invalidResourcePath, "InvalidResourcePath"))                      \
     ((invalidImplSource, "InvalidImplementationSrc"))                   \
     ((missingSourceType, "MissingSourceType"))                          \
     ((missingShaderIdInRegistry, "MissingShaderIdInRegistry"))          \
