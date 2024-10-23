@@ -21,11 +21,14 @@
 #include "pxr/usd/usdShade/shader.h"
 #include "pxr/usd/usdShade/tokens.h"
 #include "pxr/usd/usdShade/validatorTokens.h"
+#include "pxr/usd/usdShade/connectableAPI.h"
+#include "pxr/usd/usdShade/materialBindingAPI.h"
 #include "pxr/usd/ar/resolver.h"
 
 #include <algorithm>
 #include <unordered_map>
 #include <vector>
+
 
 PXR_NAMESPACE_OPEN_SCOPE
     static
@@ -598,20 +601,6 @@ _NormalMapTextureValidator(const UsdPrim& usdPrim) {
     }
 
     const UsdShadeShader shader(usdPrim);
-    if (!shader) {
-        return {
-            UsdValidationError{
-                UsdShadeValidationErrorNameTokens->invalidShaderPrim,
-                UsdValidationErrorType::Error,
-                UsdValidationErrorSites{
-                    UsdValidationErrorSite(usdPrim.GetStage(),
-                        usdPrim.GetPath())
-                },
-                TfStringPrintf("Invalid shader prim <%s>.",
-                       usdPrim.GetPath().GetText())
-            }
-        };
-    }
 
     TfToken shaderId;
     TfToken UsdPreviewSurface("UsdPreviewSurface");
@@ -677,9 +666,13 @@ _NormalMapTextureValidator(const UsdPrim& usdPrim) {
         if (!input) {
             return false;
         }
+
         const UsdShadeAttributeVector valueProducingAttributes =
             UsdShadeUtils::GetValueProducingAttributes(input);
 
+        // Query value producing attributes for input values.
+        // This has to be a length of 1, otherwise no attribute is producing a value.
+        // We require an input parameter producing the value.
         if (valueProducingAttributes.empty() ||
             valueProducingAttributes.size() != 1 ||
             !UsdShadeInput::IsInput(valueProducingAttributes[0])) {
