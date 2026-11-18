@@ -210,7 +210,8 @@ _AnchorOrResolveAssetPaths(const SdfLayerHandle &anchor,
             // anchor had no effect, and we can just leave the path as-is.
             if (assetPaths[i].GetAssetPath().empty() ||
                 SdfLayer::IsAnonymousLayerIdentifier(assetPaths[i].GetAssetPath())) {
-                return;
+                // Leave this path as-is, but keep anchoring the rest.
+                continue;
             }
 
             const std::string anchoredPath = SdfComputeAssetPathRelativeToLayer(

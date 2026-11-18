@@ -314,6 +314,16 @@ class TestUsdFlatten(unittest.TestCase):
             list([os.path.normpath(p.path) for p in attr.GetInfo("default")]),
             [os.path.abspath("assetPaths/asset.usda")])
 
+        # An empty asset path is left as-is and does not stop the paths
+        # after it from being anchored.
+        attr = resultLayer.GetAttributeAtPath(
+            "/AssetPathTest.assetPathArrayWithEmptyPath")
+        paths = [p.path for p in attr.GetInfo("default")]
+        self.assertEqual(len(paths), 2)
+        self.assertEqual(paths[0], "")
+        self._ComparePaths(os.path.normpath(paths[1]),
+                           os.path.abspath("assetPaths/asset.usda"))
+
         prim = resultLayer.GetPrimAtPath("/AssetPathTest")
         metadataDict = prim.GetInfo("customData")
         self._ComparePaths(
