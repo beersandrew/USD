@@ -551,7 +551,7 @@ _ExtendWorldTransformTimeSamples(const UsdPrim& prim,
     std::vector<double> tmpTimes;
     for (UsdPrim p = prim; !p.IsPseudoRoot(); p = p.GetParent()) {
         if (p.IsA<UsdGeomXformable>()) {
-            const UsdGeomXformable xformable(prim);
+            const UsdGeomXformable xformable(p);
             const UsdGeomXformable::XformQuery query(xformable);
             if (query.GetTimeSamplesInInterval(interval, &tmpTimes)) {
                 times->insert(times->end(), tmpTimes.begin(), tmpTimes.end());
