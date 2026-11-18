@@ -561,7 +561,14 @@ UsdGeomXformOp::GetOpTransform(UsdGeomXformOp::Type const opType,
 
     if (isScalarVal) {
         if (isInverseOp) {
-            doubleVal = -doubleVal;
+            // The inverse of a scale is its reciprocal (as for the three-axis
+            // scale op below); translates and rotates invert by negation.
+            if (opType == TypeScaleX || opType == TypeScaleY ||
+                opType == TypeScaleZ) {
+                doubleVal = 1.0 / doubleVal;
+            } else {
+                doubleVal = -doubleVal;
+            }
         }
 
         if (opType == TypeTranslateX) {

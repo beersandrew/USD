@@ -639,6 +639,27 @@ class TestUsdGeomXformable(unittest.TestCase):
 
         self.assertEqual(xformOpOrder, x.GetXformOpOrderAttr().Get())
 
+    def test_InverseSingleAxisScaleOps(self):
+        # An op next to its own inverse is skipped when computing the local
+        # transformation, so check each inverse op's own transform and a stack
+        # where the inverse is not adjacent.
+        IDENTITY = Gf.Matrix4d(1.)
+
+        s = Usd.Stage.CreateInMemory()
+        for axis, (addOp, scale) in enumerate((
+                ('AddScaleXOp', Gf.Vec3d(0.5, 1, 1)),
+                ('AddScaleYOp', Gf.Vec3d(1, 0.5, 1)),
+                ('AddScaleZOp', Gf.Vec3d(1, 1, 0.5)))):
+            x = UsdGeom.Xform.Define(s, '/World%d' % axis)
+            getattr(x, addOp)().Set(2.)
+            x.AddTranslateOp().Set(Gf.Vec3d(0, 0, 0))
+            inverseOp = getattr(x, addOp)(isInverseOp=True)
+            self._AssertCloseXf(
+                inverseOp.GetOpTransform(Usd.TimeCode.Default()),
+                Gf.Matrix4d(1.).SetScale(scale))
+            self._AssertCloseXf(
+                x.GetLocalTransformation(Usd.TimeCode.Default()), IDENTITY)
+
     def test_GetXformOp(self):
         s = Usd.Stage.CreateInMemory()
         x = UsdGeom.Xform.Define(s, '/World')
